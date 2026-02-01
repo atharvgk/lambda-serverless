@@ -5,12 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('uploadForm').addEventListener('submit', handleUpload);
     document.getElementById('refreshBtn').addEventListener('click', fetchFunctions);
-    
+
     // Close modal logic
-    document.querySelector('.close').onclick = function() {
+    document.querySelector('.close').onclick = function () {
         document.getElementById('logsModal').style.display = 'none';
     }
-    window.onclick = function(event) {
+    window.onclick = function (event) {
         if (event.target == document.getElementById('logsModal')) {
             document.getElementById('logsModal').style.display = 'none';
         }
@@ -34,7 +34,7 @@ async function fetchFunctions() {
         functions.forEach(func => {
             // Returns [id, name, language, code, timeout]
             const [id, name, language, code, timeout] = func;
-            
+
             const card = document.createElement('div');
             card.className = 'function-item';
             card.innerHTML = `
@@ -49,7 +49,7 @@ async function fetchFunctions() {
                 </div>
                 <div class="function-actions">
                     <button class="btn action" onclick="viewLogs(${id})">📄 Logs</button>
-                    <!-- <button class="btn action" onclick="runFunction(${id})">▶ Run</button> -->
+                    <button class="btn action" onclick="runFunction(${id})">▶ Run</button>
                     <button class="btn danger" onclick="deleteFunction(${id})">🗑 Delete</button>
                 </div>
             `;
@@ -65,7 +65,7 @@ async function handleUpload(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     const msgDiv = document.getElementById('uploadMessage');
-    
+
     const name = document.getElementById('fnName').value;
     const language = document.getElementById('fnLanguage').value;
     const timeout = parseInt(document.getElementById('fnTimeout').value);
@@ -138,5 +138,25 @@ async function viewLogs(id) {
         }
     } catch (error) {
         content.textContent = 'Error fetching logs.';
+    }
+}
+
+async function runFunction(id) {
+    const modal = document.getElementById('logsModal');
+    const content = document.getElementById('logsContent');
+    modal.style.display = 'block';
+    content.textContent = 'Running function...';
+
+    try {
+        const response = await fetch(`${API_URL}/functions/${id}/run`, { method: 'POST' });
+        if (response.ok) {
+            const result = await response.json();
+            content.textContent = `Result:\n${result.result}\n\nExecution Time: ${result.exec_time}s\nRuntime: ${result.runtime}`;
+        } else {
+            const error = await response.json();
+            content.textContent = `Error: ${error.detail || 'Execution failed'}`;
+        }
+    } catch (error) {
+        content.textContent = 'Error executing function.';
     }
 }

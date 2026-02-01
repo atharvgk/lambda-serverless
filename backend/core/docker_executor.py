@@ -79,6 +79,13 @@ def run_function_in_container(function_id, language, timeout, use_gvisor=False):
     with open(temp_file_path, "w") as f:
         f.write(code)
 
+    # Fallback to local execution if Docker is not available
+    if not get_docker_client():
+        print("Docker not available. Running locally.")
+        result = run_locally_unsafe(temp_file_path, language, timeout)
+        log_execution(function_id, result['exec_time'], result['mem_usage'], result['cpu_percent'], result['status'])
+        return result
+
     container = get_or_create_container(temp_file_path, language, use_gvisor)
     
     try:
@@ -129,3 +136,48 @@ def calculate_cpu_percent(stats):
     system_delta = system_total - presystem_total
     cpu_percent = round((cpu_delta / system_delta) * 100.0, 2) if system_delta > 0 else 0.0
     return cpu_percent
+
+import subprocess
+import sys
+
+def run_locally_unsafe(file_path, language, timeout):
+    """
+    Fallback execution using subprocess when Docker is not available.
+    WARNING: This executes code directly on the host. Insecure for production.
+    """
+    start_time = time.time()
+    
+    cmd = [sys.executable, file_path] if language == "python" else ["node", file_path]
+    
+    try:
+        result = subprocess.run(
+            cmd, 
+            capture_output=True, 
+            text=True, 
+            timeout=timeout
+        )
+        output = result.stdout + result.stderr
+        status = "success" if result.returncode == 0 else "error"
+        
+    except subprocess.TimeoutExpired:
+        output = "Function timed out"
+        status = "timeout"
+    except Exception as e:
+        output = f"Execution error: {str(e)}"
+        status = "error"
+
+    end_time = time.time()
+    exec_time = round(end_time - start_time, 4)
+    
+    # Mock metrics for local execution
+    memory_usage = 0 
+    cpu_percent = 0
+
+    return {
+        "result": output,
+        "status": status,
+        "exec_time": exec_time,
+        "mem_usage": memory_usage,
+        "cpu_percent": cpu_percent,
+        "runtime": "Local (Fallback)"
+    }
