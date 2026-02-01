@@ -1,6 +1,6 @@
 import sqlite3
 
-conn = sqlite3.connect("functions.db", check_same_thread=False)
+conn = sqlite3.connect("/tmp/functions.db", check_same_thread=False)
 cursor = conn.cursor()
 
 def init_db():
