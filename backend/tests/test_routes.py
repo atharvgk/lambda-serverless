@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
-from ..api.routes import router
+from ..main import app
 
-client = TestClient(router)
+client = TestClient(app)
 
 def test_list_functions():
     response = client.get("/functions/")

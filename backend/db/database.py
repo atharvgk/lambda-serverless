@@ -1,6 +1,11 @@
 import sqlite3
 
-conn = sqlite3.connect("/tmp/functions.db", check_same_thread=False)
+import os
+import tempfile
+
+# Use system temp directory for database (writable on Vercel and local)
+DB_PATH = os.path.join(tempfile.gettempdir(), "functions.db")
+conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 cursor = conn.cursor()
 
 def init_db():

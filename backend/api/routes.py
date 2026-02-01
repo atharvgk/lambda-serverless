@@ -11,8 +11,7 @@ from backend.db.models import get_execution_logs
 
 router = APIRouter()
 
-conn = sqlite3.connect("/tmp/functions.db", check_same_thread=False)
-cursor = conn.cursor()
+from backend.db.database import cursor
 
 @router.post("/functions/")
 async def upload_function(data: FunctionCreate):
