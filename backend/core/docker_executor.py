@@ -4,7 +4,12 @@ import uuid
 from backend.db.models import log_execution,get_function_code
 import docker
 
-client = docker.from_env()
+def get_docker_client():
+    try:
+        return docker.from_env()
+    except Exception as e:
+        print(f"Warning: Could not connect to Docker: {e}")
+        return None
 
 container_pool = {}
 
@@ -28,6 +33,10 @@ def create_new_container(file_path, language, use_gvisor=False):
     """
     Create a new container for executing the function.
     """
+    client = get_docker_client()
+    if not client:
+        raise Exception("Docker client is not available. Ensure Docker is running.")
+
     container_name = f"lambda_{uuid.uuid4().hex}"
     base_image = "lambda_base_python" if language == "python" else "lambda_base_node"
     file_ext = file_path.split('.')[-1]
