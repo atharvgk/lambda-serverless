@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lambda Serverless Platform</title>
     <link rel="stylesheet" href="/static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -14,49 +17,110 @@
             <p>Deploy and manage your serverless functions with ease.</p>
         </header>
 
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('upload')">🚀 Upload Function</button>
+            <button class="tab-btn" onclick="switchTab('manage')">📂 Manage Functions</button>
+            <button class="tab-btn" onclick="switchTab('monitor')">📊 Monitoring Dashboard</button>
+        </div>
+
         <main>
             <!-- Upload Section -->
-            <section class="card upload-section">
-                <h2>🚀 Upload Function</h2>
-                <form id="uploadForm">
-                    <div class="form-group">
-                        <label for="fnName">Function Name</label>
-                        <input type="text" id="fnName" placeholder="e.g., hello-world" required>
-                    </div>
-                    <div class="row">
-                        <div class="form-group half">
-                            <label for="fnLanguage">Language</label>
-                            <select id="fnLanguage">
-                                <option value="python">Python</option>
-                                <option value="javascript">JavaScript</option>
-                            </select>
+            <section id="upload" class="tab-content active">
+                <div class="card">
+                    <h2>🚀 Upload A New Function</h2>
+                    <form id="uploadForm">
+                        <div class="form-group">
+                            <label for="fnName">Function Name</label>
+                            <input type="text" id="fnName" placeholder="e.g., hello-world" required>
                         </div>
-                        <div class="form-group half">
-                            <label for="fnTimeout">Timeout (s)</label>
-                            <input type="number" id="fnTimeout" value="5" min="1" max="60">
+                        <div class="row">
+                            <div class="form-group half">
+                                <label for="fnLanguage">Language</label>
+                                <select id="fnLanguage">
+                                    <option value="python">Python</option>
+                                    <option value="javascript">JavaScript</option>
+                                </select>
+                            </div>
+                            <div class="form-group half">
+                                <label for="fnTimeout">Timeout (s)</label>
+                                <input type="number" id="fnTimeout" value="5" min="1" max="60">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="fnCode">Code</label>
-                        <textarea id="fnCode" placeholder="def main(): return 'Hello World'" required></textarea>
-                    </div>
-                    <button type="submit" class="btn primary">Upload Function</button>
-                    <div id="uploadMessage" class="message"></div>
-                </form>
+                        <div class="form-group">
+                            <label for="fnCode">Code</label>
+                            <textarea id="fnCode" placeholder="def main(): return 'Hello World'" required></textarea>
+                        </div>
+                        <button type="submit" class="btn primary">Upload Function</button>
+                        <div id="uploadMessage" class="message"></div>
+                    </form>
+                </div>
             </section>
 
-            <!-- Functions List Section -->
-            <section class="card list-section">
-                <div class="section-header">
-                    <h2>📂 Your Functions</h2>
-                    <button id="refreshBtn" class="btn secondary">↻ Refresh</button>
+            <!-- Manage Functions Section -->
+            <section id="manage" class="tab-content">
+                <div class="card">
+                    <div class="section-header">
+                        <h2>📂 Function Manager</h2>
+                        <button id="refreshBtn" class="btn secondary">↻ Refresh</button>
+                    </div>
+                    <div id="functionsList" class="functions-grid">
+                        <div class="loading">Loading functions...</div>
+                    </div>
                 </div>
-                <div id="functionsList" class="functions-grid">
-                    <!-- Functions will be populated here -->
-                    <div class="loading">Loading functions...</div>
+            </section>
+
+            <!-- Monitoring Dashboard Section -->
+            <section id="monitor" class="tab-content">
+                <div class="card">
+                    <h2>📊 Function Performance Dashboard</h2>
+                    <div class="form-group">
+                        <label for="monitorSelect">Select Function to Monitor</label>
+                        <select id="monitorSelect" onchange="fetchMetrics()">
+                            <option value="">Loading functions...</option>
+                        </select>
+                    </div>
+
+                    <div id="metricsGrid" class="metrics-grid hidden">
+                        <div class="metric-card">
+                            <h3>Total Runs</h3>
+                            <p id="totalRuns">-</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Avg Exec Time</h3>
+                            <p id="avgTime">-</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Avg CPU</h3>
+                            <p id="avgCpu">-</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Last Run</h3>
+                            <p id="lastRun">-</p>
+                        </div>
+                    </div>
+
+                    <div class="charts-container hidden" id="chartsContainer">
+                        <div class="chart-wrapper">
+                            <canvas id="timeChart"></canvas>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="cpuChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('editModal')">&times;</span>
+            <h2>Edit Function Code</h2>
+            <input type="hidden" id="editFnId">
+            <textarea id="editFnCode" class="modal-textarea"></textarea>
+            <button class="btn primary" onclick="saveCode()">Save Changes</button>
+        </div>
     </div>
 
     <!-- Logs Modal -->
@@ -70,4 +134,5 @@
 
     <script src="/static/script.js"></script>
 </body>
+
 </html>
