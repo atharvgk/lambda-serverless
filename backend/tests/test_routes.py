@@ -1,5 +1,13 @@
 from fastapi.testclient import TestClient
 from ..main import app
+from ..db import database 
+import mongomock
+
+# Mock the database connection
+mock_client = mongomock.MongoClient()
+database.db = mock_client.lambda_serverless
+# Ensure counters collection exists for get_next_sequence_value
+database.db.counters.insert_one({"_id": "function_id", "sequence_value": 0})
 
 client = TestClient(app)
 
