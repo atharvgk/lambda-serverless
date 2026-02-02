@@ -1,34 +1,27 @@
-import sqlite3
-
 import os
-import tempfile
+from pymongo import MongoClient
+import logging
 
-# Use system temp directory for database (writable on Vercel and local)
-DB_PATH = os.path.join(tempfile.gettempdir(), "functions.db")
-conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-cursor = conn.cursor()
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+MONGO_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+DB_NAME = "lambda_serverless"
+
+try:
+    client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+    # Trigger connection check
+    client.server_info()
+    db = client[DB_NAME]
+    logger.info(f"Connected to MongoDB: {DB_NAME}")
+except Exception as e:
+    logger.error(f"Could not connect to MongoDB: {e}")
+    # Fallback/Mock for build time if needed, or raise
+    db = None
 
 def init_db():
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS functions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            language TEXT NOT NULL,
-            code TEXT NOT NULL,
-            timeout INTEGER DEFAULT 5
-        );
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS executions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            function_id INTEGER,
-            execution_time FLOAT,
-            memory_usage TEXT,
-            cpu_percent TEXT,
-            status TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (function_id) REFERENCES functions(id)
-        );
-    """)
-    conn.commit()
-
+    if db is not None:
+        # Create indexes if they don't exist
+        db.functions.create_index("id", unique=True)
+        logger.info("MongoDB indexes initialized.")

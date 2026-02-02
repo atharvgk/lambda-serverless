@@ -1,85 +1,141 @@
-from backend.db.database import cursor, conn
-import os
+from backend.db.database import db
+import time
+import datetime
+
+# Helper to generate auto-incrementing ID for backward compatibility
+def get_next_sequence_value(sequence_name):
+    if db is None: return 0
+    sequence_doc = db.counters.find_one_and_update(
+        {"_id": sequence_name},
+        {"$inc": {"sequence_value": 1}},
+        upsert=True,
+        return_document=True
+    )
+    return sequence_doc["sequence_value"]
 
 def insert_function(name, language, code, timeout):
-    cursor.execute("""
-        INSERT INTO functions (name, language, code, timeout)
-        VALUES (?, ?, ?, ?)
-    """, (name, language, code, timeout))
-    conn.commit()
-    return cursor.lastrowid
+    if db is None: return None
+    
+    # Generate an integer ID to match existing frontend expectations
+    new_id = get_next_sequence_value("function_id")
+    
+    doc = {
+        "id": new_id,
+        "name": name,
+        "language": language,
+        "code": code,
+        "timeout": timeout,
+        "created_at": datetime.datetime.utcnow()
+    }
+    
+    db.functions.insert_one(doc)
+    return new_id
 
 def get_all_functions():
-    cursor.execute("SELECT * FROM functions")
-    return cursor.fetchall()
+    if db is None: return []
+    cursor = db.functions.find({}, {"_id": 0, "id": 1, "name": 1, "language": 1, "code": 1, "timeout": 1})
+    
+    # Format as list of tuples/lists to match previous SQLite return format
+    # (id, name, language, code, timeout)
+    functions = []
+    for doc in cursor:
+        functions.append((
+            doc["id"],
+            doc["name"],
+            doc["language"],
+            doc["code"],
+            doc["timeout"]
+        ))
+    return functions
 
 def delete_function_by_id(function_id):
-    try:
-        # Check if function exists first
-        cursor.execute("SELECT id FROM functions WHERE id = ?", (function_id,))
-        if not cursor.fetchone():
-            return False
-            
-        cursor.execute("DELETE FROM functions WHERE id = ?", (function_id,))
-        conn.commit()
-        return True
-    except Exception as e:
-        print(f"Error deleting function: {str(e)}")
-        conn.rollback()
-        return False
-
-def log_execution(function_id, exec_time, mem_usage, cpu_percent, status):
-    cursor.execute("""
-        INSERT INTO executions (function_id, execution_time, memory_usage, cpu_percent, status)
-        VALUES (?, ?, ?, ?, ?)
-    """, (function_id, exec_time, mem_usage, cpu_percent, status))
-    conn.commit()
-
-def get_execution_logs(function_id):
-    cursor.execute("""
-        SELECT * FROM executions WHERE function_id = ? ORDER BY timestamp DESC
-    """, (function_id,))
-    return cursor.fetchall()
-
-def get_function_id_by_path(file_path):
-    cursor.execute("""
-        SELECT id FROM functions WHERE file_path = ?
-    """, (file_path,))
-    row = cursor.fetchone()
-    return row[0] if row else None
-
-def get_aggregated_metrics(function_id):
-    cursor.execute("""
-        SELECT 
-            COUNT(*) as total_runs,
-            AVG(execution_time) as avg_exec_time,
-            AVG(CAST(memory_usage AS FLOAT)) as avg_memory_usage,
-            AVG(CAST(cpu_percent AS FLOAT)) as avg_cpu_percent,
-            MAX(timestamp) as last_run_time
-        FROM executions
-        WHERE function_id = ?
-    """, (function_id,))
-    row = cursor.fetchone()
-    if row:
-        return {
-            "function_id": function_id,
-            "total_runs": row[0],
-            "avg_exec_time": round(row[1], 4) if row[1] else 0,
-            "avg_memory_usage": round(row[2], 2) if row[2] else 0,
-            "avg_cpu_percent": round(row[3], 2) if row[3] else 0,
-            "last_run_time": row[4]
-        }
-    return None
+    if db is None: return False
+    result = db.functions.delete_one({"id": function_id})
+    return result.deleted_count > 0
 
 def update_function_code(function_id, new_code):
-    cursor.execute("""
-        UPDATE functions SET code = ? WHERE id = ?
-    """, (new_code, function_id))
-    conn.commit()
+    if db is None: return
+    db.functions.update_one(
+        {"id": function_id},
+        {"$set": {"code": new_code}}
+    )
+
+def get_function_metadata(function_id):
+    if db is None: return None
+    doc = db.functions.find_one({"id": function_id}, {"language": 1, "timeout": 1})
+    if doc:
+        return (doc["language"], doc["timeout"])
+    return None
 
 def get_function_code(function_id):
-    cursor.execute("""
-        SELECT code FROM functions WHERE id = ?
-    """, (function_id,))
-    row = cursor.fetchone()
-    return row[0] if row else None
+    if db is None: return None
+    doc = db.functions.find_one({"id": function_id}, {"code": 1})
+    return doc["code"] if doc else None
+
+def log_execution(function_id, exec_time, mem_usage, cpu_percent, status):
+    if db is None: return
+    
+    doc = {
+        "function_id": function_id,
+        "exec_time": exec_time,
+        "mem_usage": mem_usage,
+        "cpu_percent": cpu_percent,
+        "status": status,
+        "timestamp": datetime.datetime.utcnow()
+    }
+    db.executions.insert_one(doc)
+
+def get_execution_logs(function_id):
+    if db is None: return []
+    # Return matched logs in tuple format or dict format expected by frontend
+    # Current frontend expects list of tuples: (id, function_id, exec_time, mem, cpu, status, timestamp) 
+    # But actually frontend receives JSON list of lists? 
+    # Checking frontend: logs.map(l => new Date(l[6])) -> index 6 is timestamp.
+    # index 2 is time, 4 is cpu.
+    
+    # Let's verify route.py: it returns `logs`.
+    # Let's match the old SQL tuple structure:
+    # (id, function_id, exec_time, mem_usage, cpu_percent, status, timestamp)
+    
+    cursor = db.executions.find({"function_id": function_id}).sort("timestamp", -1).limit(50)
+    logs = []
+    for doc in cursor:
+        logs.append((
+            str(doc.get("_id")), # Mocking the execution primary key
+            doc["function_id"],
+            doc["exec_time"],
+            doc["mem_usage"],
+            doc["cpu_percent"],
+            doc["status"],
+            doc["timestamp"].isoformat()
+        ))
+    return logs
+
+def get_aggregated_metrics(function_id):
+    if db is None: return None
+    
+    pipeline = [
+        {"$match": {"function_id": function_id, "status": "success"}},
+        {"$group": {
+            "_id": None,
+            "total_runs": {"$sum": 1},
+            "avg_exec_time": {"$avg": "$exec_time"},
+            "avg_cpu_percent": {"$avg": "$cpu_percent"},
+            "avg_memory_usage": {"$avg": "$mem_usage"},
+            "last_run_time": {"$max": "$timestamp"}
+        }}
+    ]
+    
+    result = list(db.executions.aggregate(pipeline))
+    
+    if not result:
+        return None
+        
+    metrics = result[0]
+    return {
+        "total_runs": metrics["total_runs"],
+        "avg_exec_time": round(metrics["avg_exec_time"], 4),
+        "avg_cpu_percent": round(metrics["avg_cpu_percent"], 2),
+        "avg_memory_usage": round(metrics["avg_memory_usage"], 2),
+        "last_run_time": metrics["last_run_time"].isoformat() if metrics["last_run_time"] else None
+    }

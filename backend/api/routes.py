@@ -1,17 +1,14 @@
-import sqlite3
 from typing import Union
 from fastapi import APIRouter, Form, HTTPException
 from backend.schemas.function_schema import FunctionCreate
 from backend.db.models import insert_function, get_all_functions, delete_function_by_id
 from backend.schemas.function_schema import FunctionUpdate
-from backend.db.models import update_function_code, get_function_code
+from backend.db.models import update_function_code, get_function_code, get_function_metadata
 from backend.db.models import get_aggregated_metrics
 from backend.core.docker_executor import run_function_in_container
 from backend.db.models import get_execution_logs
 
 router = APIRouter()
-
-from backend.db.database import cursor
 
 @router.post("/functions/")
 async def upload_function(data: FunctionCreate):
@@ -31,12 +28,12 @@ class RunOptions(BaseModel):
 @router.post("/functions/{function_id}/run")
 async def run_function(function_id: int, options: RunOptions = RunOptions()):
     use_gvisor = options.use_gvisor
-    cursor.execute("SELECT language, timeout FROM functions WHERE id = ?", (function_id,))
-    row = cursor.fetchone()
-    if not row:
+    
+    metadata = get_function_metadata(function_id)
+    if not metadata:
         raise HTTPException(status_code=404, detail="Function not found")
     
-    language, timeout = row
+    language, timeout = metadata
     performance_data = run_function_in_container(function_id, language, timeout, use_gvisor)
     return performance_data
 
