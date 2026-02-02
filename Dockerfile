@@ -7,6 +7,7 @@ WORKDIR /app
 # Install system dependencies (required for some python packages)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
