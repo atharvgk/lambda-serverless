@@ -172,7 +172,12 @@ async function runFunction(id) {
     content.textContent = 'Running function...';
 
     try {
-        const response = await fetch(`${API_URL}/functions/${id}/run`, { method: 'POST' });
+        const response = await fetch(`${API_URL}/functions/${id}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ use_gvisor: false })
+        });
+
         if (response.ok) {
             const result = await response.json();
             content.textContent = `Result:\n${result.result}\n\nExecution Time: ${result.exec_time}s\nRuntime: ${result.runtime}`;
