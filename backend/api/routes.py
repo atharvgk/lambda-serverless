@@ -23,8 +23,14 @@ async def upload_function(data: FunctionCreate):
 async def list_functions():
     return get_all_functions()
 
+from pydantic import BaseModel
+
+class RunOptions(BaseModel):
+    use_gvisor: bool = False
+
 @router.post("/functions/{function_id}/run")
-async def run_function(function_id: int, use_gvisor: bool = False):
+async def run_function(function_id: int, options: RunOptions = RunOptions()):
+    use_gvisor = options.use_gvisor
     cursor.execute("SELECT language, timeout FROM functions WHERE id = ?", (function_id,))
     row = cursor.fetchone()
     if not row:
