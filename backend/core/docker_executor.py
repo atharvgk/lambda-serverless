@@ -73,8 +73,10 @@ def create_new_container(file_path, language, use_gvisor=False):
 
 def run_function_in_container(function_id, language, timeout, use_gvisor=False):
     code = get_function_code(function_id)
+    import tempfile
     file_ext = "py" if language == "python" else "js"
-    temp_file_path = f"/tmp/temp_{uuid.uuid4().hex}.{file_ext}"
+    temp_dir = tempfile.gettempdir()
+    temp_file_path = os.path.join(temp_dir, f"temp_{uuid.uuid4().hex}.{file_ext}")
 
     with open(temp_file_path, "w") as f:
         f.write(code)
