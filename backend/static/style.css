@@ -49,15 +49,20 @@ header p {
 }
 
 main {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
+    display: block;
+    width: 100%;
 }
 
-@media (min-width: 768px) {
-    main {
-        grid-template-columns: 4fr 6fr;
-    }
+/* Center charts and content */
+.tab-content {
+    max-width: 900px;
+    /* Optimal reading width */
+    margin: 0 auto;
+}
+
+/* Allow monitor to be wider */
+#monitor.tab-content {
+    max-width: 1200px;
 }
 
 .card {
@@ -410,23 +415,108 @@ textarea {
     margin: 1rem 0;
     resize: vertical;
 }
+
 /* Large Modal for Console-like Experience */
-.large-modal { width: 90%; max-width: 1200px; height: 90vh; display: flex; flex-direction: column; }
-.details-grid { display: flex; gap: 20px; flex: 1; min-height: 0; }
-.details-section { flex: 1; display: flex; flex-direction: column; min-width: 0; margin-bottom: 20px; }
-.details-section.full-width { flex: none; height: 150px; }
-.code-block, .terminal-output, .logs-block { background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: 'Fira Code', monospace; overflow: auto; flex: 1; font-size: 14px; border: 1px solid #333; white-space: pre-wrap; }
-.terminal-output { background: #000; color: #00ff00; border-left: 4px solid #00ff00; }
-.controls { margin-bottom: 10px; display: flex; gap: 10px; }
+.large-modal {
+    width: 90%;
+    max-width: 1200px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.details-grid {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+}
+
+.details-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin-bottom: 20px;
+}
+
+.details-section.full-width {
+    flex: none;
+    height: 150px;
+}
+
+.code-block,
+.terminal-output,
+.logs-block {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 15px;
+    border-radius: 8px;
+    font-family: 'Fira Code', monospace;
+    overflow: auto;
+    flex: 1;
+    font-size: 14px;
+    border: 1px solid #333;
+    white-space: pre-wrap;
+}
+
+.terminal-output {
+    background: #000;
+    color: #00ff00;
+    border-left: 4px solid #00ff00;
+}
+
+.controls {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+}
 
 /* Fix Dropdown Contrast */
-select.btn { background-color: #ffffff; color: #333333; border: 1px solid #ccc; cursor: pointer; }
-select.btn option { background-color: #ffffff; color: #333333; }
+select.btn {
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+select.btn option {
+    background-color: #ffffff;
+    color: #333333;
+}
 
 /* UI Polishing & Overflow Fixes */
-.metrics-grid, .card, .input-group { max-width: 100%; box-sizing: border-box; overflow: hidden; }
-.metric-card p { word-break: break-word; font-size: 1.1rem; /* Slightly smaller to fit timestamps */ }
-input, textarea, select { max-width: 100%; box-sizing: border-box; }
-.function-item { max-width: 100%; overflow: hidden; }
+.metrics-grid,
+.card,
+.input-group {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.metric-card p {
+    word-break: break-word;
+    font-size: 1.1rem;
+    /* Slightly smaller to fit timestamps */
+}
+
+input,
+textarea,
+select {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.function-item {
+    max-width: 100%;
+    overflow: hidden;
+}
+
 /* Glassmorphism pop */
-.card, .metric-card { border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.card,
+.metric-card {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
