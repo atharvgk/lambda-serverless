@@ -46,3 +46,23 @@ def test_run_function():
     response = client.post(f"/functions/{function_id}/run", json={"use_gvisor": False})
     assert response.status_code == 200
     assert "result" in response.json() 
+def test_update_function():
+    # Upload a function
+    test_function = {
+        "name": "test_update",
+        "language": "python",
+        "timeout": 5,
+        "code": "print('Original')"
+    }
+    upload_response = client.post("/functions/", json=test_function)
+    function_id = upload_response.json()["function_id"]
+    
+    # Update it
+    updated_data = {
+        "name": "test_update_v2",
+        "code": "print('Updated')"
+    }
+    response = client.put(f"/functions/{function_id}", json=updated_data)
+    assert response.status_code == 200
+    assert response.json()["message"] == "Function updated successfully"
+

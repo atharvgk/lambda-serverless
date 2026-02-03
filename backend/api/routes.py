@@ -3,7 +3,7 @@ from fastapi import APIRouter, Form, HTTPException
 from backend.schemas.function_schema import FunctionCreate
 from backend.db.models import insert_function, get_all_functions, delete_function_by_id
 from backend.schemas.function_schema import FunctionUpdate
-from backend.db.models import update_function_code, get_function_code, get_function_metadata
+from backend.db.models import get_function_code, get_function_metadata
 from backend.db.models import get_aggregated_metrics
 from backend.core.docker_executor import run_function_in_container
 from backend.db.models import get_execution_logs
