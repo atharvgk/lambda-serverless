@@ -171,15 +171,11 @@ async function runFunction(id) {
 
     content.textContent = 'Running function...';
 
-    const runtimeSelect = document.getElementById('runtimeSelect');
-    // Default to 'docker' (false for gvisor) if element missing or value is docker
-    const useGvisor = runtimeSelect ? runtimeSelect.value === 'gvisor' : false;
-
     try {
         const response = await fetch(`${API_URL}/functions/${id}/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ use_gvisor: useGvisor })
+            body: JSON.stringify({ use_gvisor: false })
         });
 
         if (response.ok) {
