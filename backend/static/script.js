@@ -342,3 +342,26 @@ function renderCharts(logs) {
         }
     });
 }
+
+// Edit Function
+async function editFunction(id) {
+    try {
+        const codeRes = await fetch(${API_URL}/functions//code);
+        const codeData = await codeRes.json();
+        const code = codeData.code;
+        const res = await fetch(${API_URL}/functions/);
+        const functions = await res.json();
+        const func = functions.find(f => f[0] === id);
+        if (func) {
+            document.getElementById('fnName').value = func[1];
+            document.getElementById('fnLanguage').value = func[2];
+            document.getElementById('fnCode').value = code;
+            document.getElementById('fnTimeout').value = func[4];
+            switchTab('upload');
+            window.scrollTo(0,0);
+            const msgDiv = document.getElementById('uploadMessage');
+            msgDiv.textContent = 'Loaded function ' + id + ' for cloning/editing.';
+            msgDiv.className = 'message';
+        }
+    } catch (e) { console.error('Error editing', e); alert('Failed to load function data.'); }
+}
