@@ -7,4 +7,7 @@ class FunctionCreate(BaseModel):
     code: str
 
 class FunctionUpdate(BaseModel):
-    code: str
+    name: str | None = None
+    language: str | None = None
+    code: str | None = None
+    timeout: int | None = None

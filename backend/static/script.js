@@ -11,6 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchFunctions();
         populateMonitorSelect();
     });
+
+    // Clear form when switching to Upload tab
+    document.querySelector('button[onclick="switchTab(\'upload\')"]').addEventListener('click', () => {
+        document.getElementById('uploadForm').reset();
+        document.getElementById('uploadFnId').value = '';
+        document.querySelector('#uploadForm button[type="submit"]').textContent = 'Upload Function';
+        document.querySelector('#upload h2').textContent = '🚀 Upload A New Function';
+    });
 });
 
 // Tab Logic
@@ -104,9 +112,14 @@ async function handleUpload(e) {
     msgDiv.textContent = '';
     msgDiv.className = 'message';
 
+    const fnId = document.getElementById('uploadFnId').value;
+    const isEdit = !!fnId;
+    const url = isEdit ? `${API_URL}/functions/${fnId}` : `${API_URL}/functions/`;
+    const method = isEdit ? 'PUT' : 'POST';
+
     try {
-        const response = await fetch(`${API_URL}/functions/`, {
-            method: 'POST',
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, language, timeout, code })
         });
@@ -377,8 +390,11 @@ async function editFunction(id) {
             document.getElementById('fnTimeout').value = func[4];
             switchTab('upload');
             window.scrollTo(0, 0);
+            document.getElementById('uploadFnId').value = id; // Set hidden ID
+            document.querySelector('#uploadForm button[type="submit"]').textContent = 'Update Function';
+            document.querySelector('#upload h2').textContent = '📝 Edit Function';
             const msgDiv = document.getElementById('uploadMessage');
-            msgDiv.textContent = 'Loaded function ' + id + ' for cloning/editing.';
+            msgDiv.textContent = 'Editing Function ID: ' + id;
             msgDiv.className = 'message';
         }
     } catch (e) { console.error('Error editing', e); alert('Failed to load function data.'); }

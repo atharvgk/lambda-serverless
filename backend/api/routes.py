@@ -56,10 +56,17 @@ async def delete_function(function_id: int):
         )
 
 @router.put("/functions/{function_id}")
-async def update_function(function_id: int, update: FunctionUpdate):
+async def update_function_endpoint(function_id: int, update: FunctionUpdate):
     try:
-        update_function_code(function_id, update.code)
-        return {"message": "Function code updated successfully"}
+        from backend.db.models import update_function
+        update_function(
+            function_id, 
+            name=update.name, 
+            language=update.language, 
+            code=update.code, 
+            timeout=update.timeout
+        )
+        return {"message": "Function updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     

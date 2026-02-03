@@ -53,12 +53,19 @@ def delete_function_by_id(function_id):
     result = db.functions.delete_one({"id": function_id})
     return result.deleted_count > 0
 
-def update_function_code(function_id, new_code):
+def update_function(function_id, name=None, language=None, code=None, timeout=None):
     if db is None: return
-    db.functions.update_one(
-        {"id": function_id},
-        {"$set": {"code": new_code}}
-    )
+    update_data = {}
+    if name: update_data["name"] = name
+    if language: update_data["language"] = language
+    if code: update_data["code"] = code
+    if timeout: update_data["timeout"] = timeout
+    
+    if update_data:
+        db.functions.update_one(
+            {"id": function_id},
+            {"$set": update_data}
+        )
 
 def get_function_metadata(function_id):
     if db is None: return None

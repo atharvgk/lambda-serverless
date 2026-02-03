@@ -8,6 +8,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     docker.io \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
