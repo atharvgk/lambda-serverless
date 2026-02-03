@@ -171,11 +171,14 @@ async function runFunction(id) {
 
     content.textContent = 'Running function...';
 
+    const runtimeSelect = document.getElementById('runtimeSelect');
+    const useGvisor = runtimeSelect.value === 'gvisor';
+
     try {
         const response = await fetch(`${API_URL}/functions/${id}/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ use_gvisor: false })
+            body: JSON.stringify({ use_gvisor: useGvisor })
         });
 
         if (response.ok) {
