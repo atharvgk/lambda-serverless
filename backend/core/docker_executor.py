@@ -88,7 +88,7 @@ def run_function_in_container(function_id, language, timeout, use_gvisor=False):
         simulated_label = "gVisor" if use_gvisor else "Docker"
         
         result = run_locally_unsafe(temp_file_path, language, timeout, simulate_runtime=simulated_label)
-        log_execution(function_id, result['exec_time'], result['mem_usage'], result['cpu_percent'], result['status'])
+        log_execution(function_id, result['exec_time'], result['mem_usage'], result['cpu_percent'], result['status'], result['result'])
         return result
 
     container = get_or_create_container(temp_file_path, language, use_gvisor)
@@ -108,7 +108,7 @@ def run_function_in_container(function_id, language, timeout, use_gvisor=False):
         end_time = time.time()
         exec_time = round(end_time - start_time, 4)
 
-        log_execution(function_id, exec_time, memory_usage, cpu_percent, status="success")
+        log_execution(function_id, exec_time, memory_usage, cpu_percent, status="success", output=logs)
 
         performance_data = {
             "result": logs,

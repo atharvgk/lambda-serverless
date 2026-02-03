@@ -72,7 +72,7 @@ def get_function_code(function_id):
     doc = db.functions.find_one({"id": function_id}, {"code": 1})
     return doc["code"] if doc else None
 
-def log_execution(function_id, exec_time, mem_usage, cpu_percent, status):
+def log_execution(function_id, exec_time, mem_usage, cpu_percent, status, output=""):
     if db is None: return
     
     doc = {
@@ -81,6 +81,7 @@ def log_execution(function_id, exec_time, mem_usage, cpu_percent, status):
         "mem_usage": mem_usage,
         "cpu_percent": cpu_percent,
         "status": status,
+        "output": output,  # Store the actual output
         "timestamp": datetime.datetime.utcnow()
     }
     db.executions.insert_one(doc)
@@ -101,13 +102,13 @@ def get_execution_logs(function_id):
     logs = []
     for doc in cursor:
         logs.append((
-            str(doc.get("_id")), # Mocking the execution primary key
+            str(doc.get("_id")), 
             doc["function_id"],
             doc["exec_time"],
-            doc["mem_usage"],
-            doc["cpu_percent"],
-            doc["status"],
-            doc["timestamp"].isoformat()
+            doc.get("output", ""), # Index 3: Output
+            doc["mem_usage"],      # Index 4: Memory
+            doc["status"],         # Index 5: Status
+            doc["timestamp"].isoformat() # Index 6: Timestamp
         ))
     return logs
 
