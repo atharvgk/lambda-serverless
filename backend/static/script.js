@@ -183,13 +183,23 @@ async function fetchLogsForModal(id) {
                 logsPre.textContent = "No logs yet.";
                 return;
             }
-            // Format logs nicely: [TIME] Status | Time: 0.1s | CPU: 0%
-            const formatted = logs.map(l => {
+            // Sort by latest first
+            const sortedLogs = logs.reverse();
+
+            // Format logs nicely
+            const formatted = sortedLogs.map(l => {
                 const time = l[6] ? new Date(l[6]).toLocaleTimeString() : 'Unknown';
-                const status = l[5] || 'Unknown';
+                const status = (l[5] || 'Unknown').toUpperCase();
                 const exec = l[2] || 0;
-                return `[${time}] ${status.toUpperCase()} | Duration: ${exec}s | Output: ...`;
+                // Log structure: [id, func_id, exec_time, output, mem, status, time]
+                // Output is at index 3
+                let rawOutput = l[3] || '';
+                let snippet = rawOutput.length > 50 ? rawOutput.substring(0, 50) + '...' : rawOutput;
+                snippet = snippet.replace(/\n/g, ' '); // linearize for list view
+
+                return `[${time}] ${status} | ${exec}s | Out: ${snippet}`;
             }).join('\n');
+
             logsPre.textContent = formatted;
         } else {
             logsPre.textContent = "No logs found.";
@@ -201,13 +211,16 @@ async function fetchLogsForModal(id) {
 
 async function runFunctionInsideModal(id) {
     const outputPre = document.getElementById('detailsOutput');
+    const runtimeSelect = document.getElementById('detailsRuntime');
+    // Hack: Send the chosen runtime as the gVisor flag (true=gVisor, false=Docker)
+    const useGvisor = runtimeSelect ? (runtimeSelect.value === 'true') : false;
     outputPre.textContent = 'Executing...';
 
     try {
         const response = await fetch(`${API_URL}/functions/${id}/run`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ use_gvisor: false })
+            body: JSON.stringify({ use_gvisor: useGvisor })
         });
 
         if (response.ok) {
