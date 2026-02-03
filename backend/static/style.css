@@ -422,3 +422,11 @@ textarea {
 /* Fix Dropdown Contrast */
 select.btn { background-color: #ffffff; color: #333333; border: 1px solid #ccc; cursor: pointer; }
 select.btn option { background-color: #ffffff; color: #333333; }
+
+/* UI Polishing & Overflow Fixes */
+.metrics-grid, .card, .input-group { max-width: 100%; box-sizing: border-box; overflow: hidden; }
+.metric-card p { word-break: break-word; font-size: 1.1rem; /* Slightly smaller to fit timestamps */ }
+input, textarea, select { max-width: 100%; box-sizing: border-box; }
+.function-item { max-width: 100%; overflow: hidden; }
+/* Glassmorphism pop */
+.card, .metric-card { border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }

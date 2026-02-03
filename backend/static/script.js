@@ -277,7 +277,16 @@ async function fetchMetrics() {
         document.getElementById('totalRuns').textContent = metrics.total_runs;
         document.getElementById('avgTime').textContent = metrics.avg_exec_time + 's';
         document.getElementById('avgCpu').textContent = metrics.avg_cpu_percent + '%';
-        document.getElementById('lastRun').textContent = metrics.last_run_time || '-';
+
+        let lastRun = '-';
+        if (metrics.last_run_time) {
+            try {
+                const d = new Date(metrics.last_run_time);
+                lastRun = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+                    ', ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+            } catch (e) { lastRun = metrics.last_run_time; }
+        }
+        document.getElementById('lastRun').textContent = lastRun;
 
         grid.classList.remove('hidden');
         charts.classList.remove('hidden');
@@ -346,10 +355,10 @@ function renderCharts(logs) {
 // Edit Function
 async function editFunction(id) {
     try {
-        const codeRes = await fetch(${API_URL}/functions//code);
+        const codeRes = await fetch(`${API_URL}/functions/${id}/code`);
         const codeData = await codeRes.json();
         const code = codeData.code;
-        const res = await fetch(${API_URL}/functions/);
+        const res = await fetch(`${API_URL}/functions/`);
         const functions = await res.json();
         const func = functions.find(f => f[0] === id);
         if (func) {
@@ -358,7 +367,7 @@ async function editFunction(id) {
             document.getElementById('fnCode').value = code;
             document.getElementById('fnTimeout').value = func[4];
             switchTab('upload');
-            window.scrollTo(0,0);
+            window.scrollTo(0, 0);
             const msgDiv = document.getElementById('uploadMessage');
             msgDiv.textContent = 'Loaded function ' + id + ' for cloning/editing.';
             msgDiv.className = 'message';
