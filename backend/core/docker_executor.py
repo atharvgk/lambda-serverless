@@ -80,15 +80,19 @@ def run_function_in_container(function_id, language, timeout, use_gvisor=False):
 
     with open(temp_file_path, "w") as f:
         f.write(code)
-
-    # Fallback to local execution if Docker is not available
-    if not get_docker_client():
-        print("Docker not available. Running locally.")
+    # FORCE FALLBACK (Simulation Mode)
+    # The user requested to ALWAYS run locally (subprocess) but "show" Docker/gVisor in the UI.
+    # This bypasses real Docker execution to ensure reliability and speed for the demo.
+    
+    # if not get_docker_client(): <--- Old check
+    if True: # Always runs this block
+        # print("Docker not available. Running locally.") 
         # Pass use_gvisor to the fallback function so it can spoof the runtime name
         result = run_locally_unsafe(temp_file_path, language, timeout, use_gvisor)
         log_execution(function_id, result['exec_time'], result['mem_usage'], result['cpu_percent'], result['status'])
         return result
 
+    # The code below (Real Docker) is now unreachable but kept for reference
     container = get_or_create_container(temp_file_path, language, use_gvisor)
     
     try:
