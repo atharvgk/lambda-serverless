@@ -1,11 +1,15 @@
 from fastapi.testclient import TestClient
 from ..main import app
 from ..db import database 
+from ..db import models  # Import models to patch its db reference
 import mongomock
 
 # Mock the database connection
 mock_client = mongomock.MongoClient()
-database.db = mock_client.lambda_serverless
+mock_db = mock_client.lambda_serverless
+database.db = mock_db
+models.db = mock_db  # <--- CRITICAL FIX: Patch the reference in models.py
+
 # Ensure counters collection exists for get_next_sequence_value
 database.db.counters.insert_one({"_id": "function_id", "sequence_value": 0})
 

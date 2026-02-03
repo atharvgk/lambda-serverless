@@ -123,12 +123,31 @@
         </div>
     </div>
 
-    <!-- Logs Modal -->
-    <div id="logsModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Function Logs</h2>
-            <pre id="logsContent">Loading logs...</pre>
+    <!-- Unified Details Modal (Streamlit-style) -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close" id="detailsCloseBtn">&times;</span>
+            <h2 id="detailsTitle">Function Details</h2>
+
+            <div class="details-grid">
+                <div class="details-section">
+                    <h3>Source Code</h3>
+                    <pre id="detailsCode" class="code-block">Loading...</pre>
+                </div>
+
+                <div class="details-section">
+                    <h3>Execution Output</h3>
+                    <div class="controls">
+                        <button id="detailsRunBtn" class="btn primary">▶ Run Exec</button>
+                    </div>
+                    <pre id="detailsOutput" class="terminal-output">Ready to run...</pre>
+                </div>
+            </div>
+
+            <div class="details-section full-width">
+                <h3>Execution Logs (History)</h3>
+                <pre id="detailsLogs" class="logs-block">Loading logs...</pre>
+            </div>
         </div>
     </div>
 

@@ -66,8 +66,7 @@ async function fetchFunctions() {
                     </div>
                 </div>
                 <div class="function-actions">
-                    <button class="btn action" onclick="viewLogs(${id})">📄 Logs</button>
-                    <button class="btn action" onclick="runFunction(${id})">▶ Run</button>
+                    <button class="btn action" onclick="openFunctionDetails(${id})">▶ Open Console</button>
                     <button class="btn action" onclick="editFunction(${id})">📝 Edit</button>
                     <button class="btn danger" onclick="deleteFunction(${id})">🗑 Delete</button>
                 </div>
@@ -139,37 +138,70 @@ async function deleteFunction(id) {
     }
 }
 
-// View Logs
-async function viewLogs(id) {
-    const modal = document.getElementById('logsModal');
-    const content = document.getElementById('logsContent');
+// Unified "Function Details" Modal (Restoring Streamlit-like feel)
+async function openFunctionDetails(id) {
+    const modal = document.getElementById('detailsModal');
+    const title = document.getElementById('detailsTitle');
+    const codePre = document.getElementById('detailsCode');
+    const logsPre = document.getElementById('detailsLogs');
+    const outputPre = document.getElementById('detailsOutput');
+
+    // Reset contents
     modal.style.display = 'block';
+    title.textContent = `Function ID: ${id}`;
+    codePre.textContent = 'Loading...';
+    logsPre.textContent = 'Loading logs...';
+    outputPre.textContent = 'Ready to run...'; // Reset output
 
-    // Position modal close logic
-    modal.querySelector('.close').onclick = () => closeModal('logsModal');
+    // Store active function ID for the "Run" button inside the modal
+    document.getElementById('detailsRunBtn').onclick = () => runFunctionInsideModal(id);
+    document.getElementById('detailsCloseBtn').onclick = () => closeModal('detailsModal');
 
-    content.textContent = 'Loading logs...';
     try {
-        const response = await fetch(`${API_URL}/functions/${id}/logs`);
-        if (response.ok) {
-            const logs = await response.json();
-            content.textContent = logs.length ? JSON.stringify(logs, null, 2) : 'No logs available.';
-        } else {
-            content.textContent = 'No logs found.';
+        // 1. Fetch Code
+        const codeRes = await fetch(`${API_URL}/functions/${id}/code`);
+        if (codeRes.ok) {
+            const data = await codeRes.json();
+            codePre.textContent = data.code;
         }
-    } catch (error) {
-        content.textContent = 'Error fetching logs.';
+
+        // 2. Fetch Logs
+        fetchLogsForModal(id);
+
+    } catch (e) {
+        console.error(e);
     }
 }
 
-// Run Function
-async function runFunction(id) {
-    const modal = document.getElementById('logsModal');
-    const content = document.getElementById('logsContent');
-    modal.style.display = 'block';
-    modal.querySelector('.close').onclick = () => closeModal('logsModal');
+async function fetchLogsForModal(id) {
+    const logsPre = document.getElementById('detailsLogs');
+    try {
+        const res = await fetch(`${API_URL}/functions/${id}/logs`);
+        if (res.ok) {
+            const logs = await res.json();
+            if (logs.length === 0) {
+                logsPre.textContent = "No logs yet.";
+                return;
+            }
+            // Format logs nicely: [TIME] Status | Time: 0.1s | CPU: 0%
+            const formatted = logs.map(l => {
+                const time = l[6] ? new Date(l[6]).toLocaleTimeString() : 'Unknown';
+                const status = l[5] || 'Unknown';
+                const exec = l[2] || 0;
+                return `[${time}] ${status.toUpperCase()} | Duration: ${exec}s | Output: ...`;
+            }).join('\n');
+            logsPre.textContent = formatted;
+        } else {
+            logsPre.textContent = "No logs found.";
+        }
+    } catch (e) {
+        logsPre.textContent = "Error fetching logs.";
+    }
+}
 
-    content.textContent = 'Running function...';
+async function runFunctionInsideModal(id) {
+    const outputPre = document.getElementById('detailsOutput');
+    outputPre.textContent = 'Executing...';
 
     try {
         const response = await fetch(`${API_URL}/functions/${id}/run`, {
@@ -180,60 +212,17 @@ async function runFunction(id) {
 
         if (response.ok) {
             const result = await response.json();
-            content.textContent = `Result:\n${result.result}\n\nExecution Time: ${result.exec_time}s\nRuntime: ${result.runtime}`;
-            // Refresh monitor if that tab is active
-            populateMonitorSelect();
+            outputPre.textContent = `> Output:\n${result.result}\n\n> Stats:\nTime: ${result.exec_time}s\nRuntime: ${result.runtime}`;
+            // Refresh logs pane
+            fetchLogsForModal(id);
+            // Refresh charts if needed
+            fetchMetrics();
         } else {
             const error = await response.json();
-            content.textContent = `Error: ${error.detail || 'Execution failed'}`;
+            outputPre.textContent = `Error: ${error.detail || 'Failed'}`;
         }
     } catch (error) {
-        content.textContent = 'Error executing function.';
-    }
-}
-
-// Edit Function
-async function editFunction(id) {
-    const modal = document.getElementById('editModal');
-    const codeArea = document.getElementById('editFnCode');
-    document.getElementById('editFnId').value = id;
-
-    modal.style.display = 'block';
-    codeArea.value = 'Loading code...';
-
-    try {
-        const response = await fetch(`${API_URL}/functions/${id}/code`);
-        if (response.ok) {
-            const data = await response.json();
-            codeArea.value = data.code;
-        } else {
-            codeArea.value = 'Error fetching code.';
-        }
-    } catch (error) {
-        codeArea.value = 'Error fetching code.';
-    }
-}
-
-async function saveCode() {
-    const id = document.getElementById('editFnId').value;
-    const code = document.getElementById('editFnCode').value;
-
-    try {
-        const response = await fetch(`${API_URL}/functions/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
-        });
-
-        if (response.ok) {
-            alert('Code updated successfully!');
-            closeModal('editModal');
-            fetchFunctions();
-        } else {
-            alert('Failed to update code.');
-        }
-    } catch (error) {
-        alert('Error updating code.');
+        outputPre.textContent = 'Network Error executing function.';
     }
 }
 
