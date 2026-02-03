@@ -14,14 +14,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Tab Logic
+// Tab Logic
 function switchTab(tabId) {
     // Hide all tabs
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
     // Show active tab
-    document.getElementById(tabId).classList.add('active');
-    document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+    const tabContent = document.getElementById(tabId);
+    if (tabContent) tabContent.classList.add('active');
+
+    // Highlight active button (Robust matching)
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(tabId)) {
+            btn.classList.add('active');
+        }
+    });
 }
 
 // Modal Logic
