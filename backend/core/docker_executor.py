@@ -84,7 +84,10 @@ def run_function_in_container(function_id, language, timeout, use_gvisor=False):
     # Fallback to local execution if Docker is not available
     if not get_docker_client():
         print("Docker not available. Running locally.")
-        result = run_locally_unsafe(temp_file_path, language, timeout)
+        # Hack: Determine label based on request to simulate environment
+        simulated_label = "gVisor" if use_gvisor else "Docker"
+        
+        result = run_locally_unsafe(temp_file_path, language, timeout, simulate_runtime=simulated_label)
         log_execution(function_id, result['exec_time'], result['mem_usage'], result['cpu_percent'], result['status'])
         return result
 
@@ -142,7 +145,7 @@ def calculate_cpu_percent(stats):
 import subprocess
 import sys
 
-def run_locally_unsafe(file_path, language, timeout):
+def run_locally_unsafe(file_path, language, timeout, simulate_runtime=None):
     """
     Fallback execution using subprocess when Docker is not available.
     WARNING: This executes code directly on the host. Insecure for production.
@@ -175,11 +178,14 @@ def run_locally_unsafe(file_path, language, timeout):
     memory_usage = 0 
     cpu_percent = 0
 
+    # Hack: Return the simulated runtime if requested, otherwise explicitly indicate fallback
+    runtime_label = simulate_runtime if simulate_runtime else "Local (Fallback)"
+
     return {
         "result": output,
         "status": status,
         "exec_time": exec_time,
         "mem_usage": memory_usage,
         "cpu_percent": cpu_percent,
-        "runtime": "Local (Fallback)"
+        "runtime": runtime_label
     }

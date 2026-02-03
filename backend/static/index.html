@@ -138,6 +138,10 @@
                 <div class="details-section">
                     <h3>Execution Output</h3>
                     <div class="controls">
+                        <select id="detailsRuntime" class="btn secondary" style="width: auto;">
+                            <option value="false">Runtime: Docker</option>
+                            <option value="true">Runtime: gVisor</option>
+                        </select>
                         <button id="detailsRunBtn" class="btn primary">▶ Run Exec</button>
                     </div>
                     <pre id="detailsOutput" class="terminal-output">Ready to run...</pre>
